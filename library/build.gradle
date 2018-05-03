@@ -1,0 +1,14 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "com.android.support:appcompat-v7:${SURPORT_LIB_VERSION}"
+
+    testImplementation "junit:junit:${JUNIT_VERSION}"
+}
