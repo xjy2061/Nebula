@@ -15,13 +15,6 @@ buildscript {
     }
 }
 
-project.ext {
-    compileSdkVersion = COMPILE_SDK_VERSION.toInteger()
-    buildToolsVersion = "${BUILD_TOOLS_VERSION}"
-    minSdkVersion = MIN_SDK_VERSION
-    targetSdkVersion = TARGET_SDK_VERSION
-}
-
 allprojects {
     repositories {
         google()

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CodeInputView">
+        <attr name="codeCount" format="integer"/>
+        <attr name="android:textSize" format="dimension|reference"/>
+        <attr name="android:textColor" format="color|reference"/>
+        <attr name="textMarginBottom" format="dimension|reference"/>
+        <attr name="underlineWidth" format="dimension|reference"/>
+        <attr name="underlineHeight" format="dimension|reference"/>
+        <attr name="underlineGap" format="dimension|reference"/>
+        <attr name="underlineColor" format="color|reference"/>
+        <attr name="underlineSelectedColor" format="color|reference"/>
+        <attr name="inputType" format="integer">
+            <enum name="text" value="1"/>
+            <enum name="number" value="2"/>
+        </attr>
+    </declare-styleable>
+</resources>
