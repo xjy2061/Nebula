@@ -2,8 +2,8 @@
 <resources>
     <declare-styleable name="CodeInputView">
         <attr name="codeCount" format="integer"/>
-        <attr name="android:textSize" format="dimension|reference"/>
-        <attr name="android:textColor" format="color|reference"/>
+        <attr name="android:textSize"/>
+        <attr name="android:textColor"/>
         <attr name="textMarginBottom" format="dimension|reference"/>
         <attr name="underlineWidth" format="dimension|reference"/>
         <attr name="underlineHeight" format="dimension|reference"/>

@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.support.annotation.IntDef;
 import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
 import android.text.InputType;
@@ -21,9 +22,15 @@ import android.view.inputmethod.InputMethodManager;
 
 import org.xjy.android.nebula.R;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Stack;
 
 public class CodeInputView extends View {
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({InputType.TYPE_CLASS_NUMBER, InputType.TYPE_CLASS_TEXT})
+    @interface CodeInputType {}
+
     @IntRange(from = 1)
     private int mCodeCount = 4;
     private int mTextSize;
@@ -34,6 +41,7 @@ public class CodeInputView extends View {
     private int mUnderlineGap;
     private int mUnderlineColor;
     private int mUnderlineSelectedColor;
+    @CodeInputType
     private int mInputType = InputType.TYPE_CLASS_NUMBER;
 
     private Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -159,7 +167,7 @@ public class CodeInputView extends View {
         }
     }
 
-    public void setInputType(int inputType) {
+    public void setInputType(@CodeInputType int inputType) {
         if (mInputType != inputType) {
             mInputType = inputType;
             invalidate();
@@ -191,7 +199,7 @@ public class CodeInputView extends View {
 
     @Override
     public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
-        outAttrs.inputType = mInputType;
+        outAttrs.inputType = mInputType == InputType.TYPE_CLASS_TEXT ? mInputType | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS : mInputType;
         return new BaseInputConnection(this, false);
     }
 
