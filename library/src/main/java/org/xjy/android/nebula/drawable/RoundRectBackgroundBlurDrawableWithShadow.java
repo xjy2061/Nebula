@@ -1,5 +1,6 @@
 package org.xjy.android.nebula.drawable;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
@@ -29,22 +30,26 @@ public class RoundRectBackgroundBlurDrawableWithShadow extends Drawable {
     private int mBackgroundColor;
     private float mCornerRadius;
     private float mShadowSize;
+    private float mInsetShadow;
     private int mShadowStartColor;
     private int mShadowEndColor;
 
-    private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    private boolean mCardDirty = true;
+    private RectF mCardBounds = new RectF();
+    private Path mCardPath = new Path();
+    private Paint mCardPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    private boolean mShadowDirty = true;
+    private Path mCornerShadowPath = new Path();
     private Paint mCornerShadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
     private Paint mEdgeShadowPaint = new Paint(Paint.DITHER_FLAG);
-    private Path mPath = new Path();
-    private Path mCornerShadowPath = new Path();
-    private boolean mDirty = true;
-    private boolean mShadowDirty = true;
 
     public RoundRectBackgroundBlurDrawableWithShadow(View view) {
         mView = new WeakReference<>(view);
-        mCornerRadius = DimensionUtils.dpToFloatPx(10, view.getContext());
-        mShadowSize = mCornerRadius;
-        mShadowStartColor = 0x07000000;
+        Context context = view.getContext();
+        mCornerRadius = DimensionUtils.dpToFloatPx(6, context);
+        mShadowSize = DimensionUtils.dpToFloatPx(10, context);
+        mInsetShadow = DimensionUtils.dpToFloatPx(4, context);
+        mShadowStartColor = 0x14000000;
         mShadowEndColor = Color.TRANSPARENT;
     }
 
@@ -53,24 +58,45 @@ public class RoundRectBackgroundBlurDrawableWithShadow extends Drawable {
         if (oldBackgroundView != backgroundView || mBackgroundColor != backgroundColor) {
             mBackgroundView = backgroundView == null ? null : new WeakReference<>(backgroundView);
             mBackgroundColor = backgroundColor;
-            mDirty = true;
+            mCardDirty = true;
             invalidateSelf();
         }
     }
 
     public void setCornerRadius(float cornerRadius) {
+        if (cornerRadius < 0f) {
+            throw new IllegalArgumentException("Invalid radius " + cornerRadius + ". Must be >= 0");
+        }
         if (mCornerRadius != cornerRadius) {
             mCornerRadius = cornerRadius;
-            mDirty = true;
+            mCardDirty = true;
             mShadowDirty = true;
             invalidateSelf();
         }
     }
 
     public void setShadowSize(float shadowSize) {
+        if (shadowSize < 0f) {
+            throw new IllegalArgumentException("Invalid shadow size " + shadowSize + ". Must be >= 0");
+        }
         if (mShadowSize != shadowSize) {
             mShadowSize = shadowSize;
-            mDirty = true;
+            mCardDirty = true;
+            mShadowDirty = true;
+            invalidateSelf();
+        }
+    }
+
+    public void setInsetShadow(float insetShadow) {
+        if (insetShadow < 0f) {
+            throw new IllegalArgumentException("Invalid inset shadow " + insetShadow + ". Must be >= 0");
+        }
+        if (insetShadow > mShadowSize) {
+            insetShadow = mShadowSize;
+        }
+        if (mInsetShadow != insetShadow) {
+            mInsetShadow = insetShadow;
+            mCardDirty = true;
             mShadowDirty = true;
             invalidateSelf();
         }
@@ -93,13 +119,69 @@ public class RoundRectBackgroundBlurDrawableWithShadow extends Drawable {
     }
 
     public void backgroundInvalid() {
-        mDirty = true;
+        mCardDirty = true;
         invalidateSelf();
+    }
+
+    @Override
+    protected void onBoundsChange(Rect bounds) {
+        super.onBoundsChange(bounds);
+        mCardDirty = true;
+        mShadowDirty = true;
     }
 
     @Override
     public void draw(@NonNull Canvas canvas) {
         Rect bounds = getBounds();
+
+        if (mCardDirty) {
+            float offset = mShadowSize - mInsetShadow;
+            mCardBounds.set(bounds.left + offset, bounds.top + offset, bounds.right - offset, bounds.bottom - mShadowSize);
+            mCardPath.reset();
+            mCardPath.setFillType(Path.FillType.EVEN_ODD);
+            mCardPath.addRoundRect(mCardBounds, mCornerRadius, mCornerRadius, Path.Direction.CW);
+            if (mBackgroundView == null) {
+                mCardPaint.setShader(null);
+                mCardPaint.setColor(mBackgroundColor);
+                mCardDirty = false;
+            } else {
+                View view = mView.get();
+                View backgroundView = mBackgroundView.get();
+                if (view != null && backgroundView != null) {
+                    Drawable backgroundDrawable = backgroundView.getBackground();
+                    if (backgroundDrawable != null) {
+                        int width = (int) mCardBounds.width();
+                        int height = (int) mCardBounds.height();
+                        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                        Canvas tempCanvas = new Canvas(bitmap);
+                        int[] location = new int[2];
+                        backgroundView.getLocationOnScreen(location);
+                        int dx = location[0];
+                        int dy = location[1];
+                        view.getLocationOnScreen(location);
+                        int save = tempCanvas.save();
+                        tempCanvas.translate((backgroundView.getWidth() == view.getWidth() ? 0 : dx - location[0]) - mShadowSize, dy - location[1] - mShadowSize);
+                        backgroundDrawable.draw(tempCanvas);
+                        tempCanvas.restoreToCount(save);
+                        Bitmap finalBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                        tempCanvas = new Canvas(finalBitmap);
+                        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+                        if (mBackgroundColor != 0) {
+                            BitmapUtils.blur(bitmap, 100);
+                            tempCanvas.drawColor(mBackgroundColor);
+                            paint.setAlpha(35);
+                            tempCanvas.drawBitmap(bitmap, 0, 0, paint);
+                        } else {
+                            BitmapUtils.blur(bitmap, 50);
+                            tempCanvas.drawBitmap(bitmap, 0, 0, paint);
+                            tempCanvas.drawColor(0x1affffff);
+                        }
+                        mCardPaint.setShader(new BitmapShader(finalBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+                        mCardDirty = false;
+                    }
+                }
+            }
+        }
 
         float outerRadius = mCornerRadius + mShadowSize;
         if (mShadowDirty) {
@@ -118,85 +200,51 @@ public class RoundRectBackgroundBlurDrawableWithShadow extends Drawable {
             mEdgeShadowPaint.setShader(new LinearGradient(0, -mCornerRadius, 0, -outerRadius, mShadowStartColor, mShadowEndColor, Shader.TileMode.CLAMP));
             mShadowDirty = false;
         }
-        float edgeShadowInset = outerRadius * 2;
-        float hEdgeShadowWidth = bounds.width() - edgeShadowInset;
-        float vEdgeShadowWidth = bounds.height() - edgeShadowInset;
+
+        canvas.translate(0, mInsetShadow);
+        float edgeShadowTop = -outerRadius;
+        float inset = mCornerRadius + mInsetShadow;
+        float edgeShadowInset = inset * 2;
+        float hEdgeShadowWidth = mCardBounds.width() - edgeShadowInset;
+        float vEdgeShadowWidth = mCardBounds.height() - edgeShadowInset;
         //LT
         int save = canvas.save();
-        canvas.translate(bounds.left + outerRadius, bounds.top + outerRadius);
+        canvas.translate(mCardBounds.left + inset, mCardBounds.top + inset);
         canvas.drawPath(mCornerShadowPath, mCornerShadowPaint);
-        canvas.drawRect(0, -outerRadius, hEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
+        if (hEdgeShadowWidth > 0) {
+            canvas.drawRect(0, edgeShadowTop, hEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
+        }
         canvas.restoreToCount(save);
         //RT
         save = canvas.save();
-        canvas.translate(bounds.right - outerRadius, bounds.top + outerRadius);
+        canvas.translate(mCardBounds.right - inset, mCardBounds.top + inset);
         canvas.rotate(90);
         canvas.drawPath(mCornerShadowPath, mCornerShadowPaint);
-        canvas.drawRect(0, -outerRadius, vEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
+        if (vEdgeShadowWidth > 0) {
+            canvas.drawRect(0, edgeShadowTop, vEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
+        }
         canvas.restoreToCount(save);
         //RB
         save = canvas.save();
-        canvas.translate(bounds.right - outerRadius, bounds.bottom - outerRadius);
+        canvas.translate(mCardBounds.right - inset, mCardBounds.bottom - inset);
         canvas.rotate(180);
         canvas.drawPath(mCornerShadowPath, mCornerShadowPaint);
-        canvas.drawRect(0, -outerRadius, hEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
+        if (hEdgeShadowWidth > 0) {
+            canvas.drawRect(0, edgeShadowTop, hEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
+        }
         canvas.restoreToCount(save);
         //LB
         save = canvas.save();
-        canvas.translate(bounds.left + outerRadius, bounds.bottom - outerRadius);
+        canvas.translate(mCardBounds.left + inset, mCardBounds.bottom - inset);
         canvas.rotate(270);
         canvas.drawPath(mCornerShadowPath, mCornerShadowPaint);
-        canvas.drawRect(0, -outerRadius, vEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
-        canvas.restoreToCount(save);
-
-        if (mDirty) {
-            mPath.reset();
-            mPath.setFillType(Path.FillType.EVEN_ODD);
-            RectF rect = new RectF(bounds.left + mShadowSize, bounds.top + mShadowSize, bounds.right - mShadowSize, bounds.bottom - mShadowSize);
-            mPath.addRoundRect(rect, mCornerRadius, mCornerRadius, Path.Direction.CW);
-            if (mBackgroundView == null) {
-                mPaint.setShader(null);
-                mPaint.setColor(mBackgroundColor);
-                mDirty = false;
-            } else {
-                View view = mView.get();
-                View backgroundView = mBackgroundView.get();
-                if (view != null && backgroundView != null) {
-                    Drawable backgroundDrawable = backgroundView.getBackground();
-                    if (backgroundDrawable != null) {
-                        int width = (int) rect.width();
-                        int height = (int) rect.height();
-                        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                        Canvas tempCanvas = new Canvas(bitmap);
-                        int[] location = new int[2];
-                        backgroundView.getLocationOnScreen(location);
-                        int dx = location[0];
-                        int dy = location[1];
-                        view.getLocationOnScreen(location);
-                        save = tempCanvas.save();
-                        tempCanvas.translate((backgroundView.getWidth() == view.getWidth() ? 0 : dx - location[0]) - mShadowSize, dy - location[1] - mShadowSize);
-                        backgroundDrawable.draw(tempCanvas);
-                        tempCanvas.restoreToCount(save);
-                        Bitmap finalBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                        tempCanvas = new Canvas(finalBitmap);
-                        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-                        if (mBackgroundColor != 0) {
-                            BitmapUtils.blur(bitmap, 100);
-                            tempCanvas.drawColor(mBackgroundColor);
-                            paint.setAlpha(35);
-                            tempCanvas.drawBitmap(bitmap, 0, 0, paint);
-                        } else {
-                            BitmapUtils.blur(bitmap, 50);
-                            tempCanvas.drawBitmap(bitmap, 0, 0, paint);
-                            tempCanvas.drawColor(0x1affffff);
-                        }
-                        mPaint.setShader(new BitmapShader(finalBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-                        mDirty = false;
-                    }
-                }
-            }
+        if (vEdgeShadowWidth > 0) {
+            canvas.drawRect(0, edgeShadowTop, vEdgeShadowWidth, -mCornerRadius, mEdgeShadowPaint);
         }
-        canvas.drawPath(mPath, mPaint);
+        canvas.restoreToCount(save);
+        canvas.translate(0, -mInsetShadow);
+
+        canvas.drawPath(mCardPath, mCardPaint);
     }
 
     @Override
