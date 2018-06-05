@@ -54,6 +54,7 @@ public class CodeInputView extends View {
     private ValueAnimator mUnderlineAnimator;
 
     private OnCompleteListener mOnCompleteListener;
+    private OnCodeChangedListener mOnCodeChangedListener;
 
     public CodeInputView(Context context) {
         this(context, null);
@@ -182,6 +183,9 @@ public class CodeInputView extends View {
         mText.clear();
         stopUnderlineAnimation();
         invalidate();
+        if (mOnCodeChangedListener != null) {
+            mOnCodeChangedListener.onCodeChanged();
+        }
     }
 
     @Override
@@ -209,6 +213,9 @@ public class CodeInputView extends View {
             mText.pop();
             stopUnderlineAnimation();
             invalidate();
+            if (mOnCodeChangedListener != null) {
+                mOnCodeChangedListener.onCodeChanged();
+            }
             return true;
         }
         return super.onKeyDown(keyCode, event);
@@ -219,6 +226,7 @@ public class CodeInputView extends View {
         char typedChar = (char) event.getUnicodeChar();
         if (mText.size() < mCodeCount && mInputType == InputType.TYPE_CLASS_NUMBER ? Character.isDigit(typedChar) : Character.isLetterOrDigit(typedChar)) {
             mText.push(Character.toString(typedChar));
+            stopUnderlineAnimation();
             startUnderlineAnimation();
             invalidate();
             if (mOnCompleteListener != null && mText.size() == mCodeCount) {
@@ -227,6 +235,9 @@ public class CodeInputView extends View {
                     text.append(mText.get(i));
                 }
                 mOnCompleteListener.onComplete(text.toString());
+            }
+            if (mOnCodeChangedListener != null) {
+                mOnCodeChangedListener.onCodeChanged();
             }
             return true;
         }
@@ -291,5 +302,9 @@ public class CodeInputView extends View {
 
     interface OnCompleteListener {
         void onComplete(String code);
+    }
+
+    interface OnCodeChangedListener {
+        void onCodeChanged();
     }
 }
