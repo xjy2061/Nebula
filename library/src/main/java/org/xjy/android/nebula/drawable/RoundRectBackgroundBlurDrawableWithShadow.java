@@ -1,6 +1,5 @@
 package org.xjy.android.nebula.drawable;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
@@ -17,6 +16,7 @@ import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
 import android.view.View;
 
 import org.xjy.android.common.BitmapUtils;
@@ -45,10 +45,10 @@ public class RoundRectBackgroundBlurDrawableWithShadow extends Drawable {
 
     public RoundRectBackgroundBlurDrawableWithShadow(View view) {
         mView = new WeakReference<>(view);
-        Context context = view.getContext();
-        mCornerRadius = DimensionUtils.dpToFloatPx(6, context);
-        mShadowSize = DimensionUtils.dpToFloatPx(10, context);
-        mInsetShadow = DimensionUtils.dpToFloatPx(4, context);
+        DisplayMetrics displayMetrics = view.getContext().getResources().getDisplayMetrics();
+        mCornerRadius = DimensionUtils.dpToFloatPx(6, displayMetrics);
+        mShadowSize = DimensionUtils.dpToFloatPx(10, displayMetrics);
+        mInsetShadow = DimensionUtils.dpToFloatPx(4, displayMetrics);
         mShadowStartColor = 0x14000000;
         mShadowEndColor = Color.TRANSPARENT;
     }
