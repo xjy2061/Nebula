@@ -12,12 +12,13 @@ import android.graphics.Rect;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.view.animation.PathInterpolatorCompat;
 
 import java.util.ArrayList;
+
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.animation.PathInterpolatorCompat;
 
 public class MeteorDrawable extends Drawable implements Animatable {
     private Paint mPaint;

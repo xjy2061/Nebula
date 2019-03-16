@@ -6,9 +6,6 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.support.annotation.IntDef;
-import android.support.annotation.IntRange;
-import android.support.annotation.Nullable;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
@@ -25,6 +22,10 @@ import org.xjy.android.nebula.R;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Stack;
+
+import androidx.annotation.IntDef;
+import androidx.annotation.IntRange;
+import androidx.annotation.Nullable;
 
 public class CodeInputView extends View {
     @Retention(RetentionPolicy.SOURCE)

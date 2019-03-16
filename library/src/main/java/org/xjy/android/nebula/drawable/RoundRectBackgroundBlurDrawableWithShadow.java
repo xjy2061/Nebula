@@ -14,8 +14,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 import android.view.View;
 
@@ -23,6 +21,9 @@ import org.xjy.android.common.BitmapUtils;
 import org.xjy.android.common.DimensionUtils;
 
 import java.lang.ref.WeakReference;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class RoundRectBackgroundBlurDrawableWithShadow extends Drawable {
     private WeakReference<View> mView;

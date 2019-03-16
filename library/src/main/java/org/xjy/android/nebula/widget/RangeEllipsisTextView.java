@@ -3,9 +3,10 @@ package org.xjy.android.nebula.widget;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.support.v7.widget.AppCompatTextView;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+
+import androidx.appcompat.widget.AppCompatTextView;
 
 public class RangeEllipsisTextView extends AppCompatTextView {
     private static final String ELLIPSIS_STRING = "\u2026";

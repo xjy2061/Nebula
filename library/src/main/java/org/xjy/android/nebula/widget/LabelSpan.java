@@ -2,8 +2,9 @@ package org.xjy.android.nebula.widget;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.support.annotation.NonNull;
 import android.text.style.ReplacementSpan;
+
+import androidx.annotation.NonNull;
 
 public class LabelSpan extends ReplacementSpan {
     private int mTextColor;
