@@ -215,6 +215,12 @@ public class SnapHeaderView extends FrameLayout {
         }
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        mScroller.abortAnimation();
+        super.onDetachedFromWindow();
+    }
+
     private void updateTranslateY(float translateY) {
         float newTranslateY = Math.max(-mHeaderHeight, Math.min(translateY, 0));
         if (newTranslateY != mHeaderTranslateY) {
