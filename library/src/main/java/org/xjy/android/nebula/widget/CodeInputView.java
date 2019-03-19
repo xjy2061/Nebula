@@ -267,6 +267,7 @@ public class CodeInputView extends View {
     protected void onDraw(Canvas canvas) {
         mTextPaint.setTextSize(mTextSize);
         mTextPaint.getFontMetrics(mFontMetrics);
+        mTextPaint.setColor(mTextColor);
         int textCount = mText.size();
         for (int i = 0; i < mCodeCount; i++) {
             float x = (mUnderlineWidth + mUnderlineGap) * i;
