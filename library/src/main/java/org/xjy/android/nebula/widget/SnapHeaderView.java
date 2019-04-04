@@ -80,8 +80,10 @@ public class SnapHeaderView extends FrameLayout {
     public View removeHeader() {
         View header = mHeader;
         if (mHeader != null) {
+            updateTranslateY(-mHeaderHeight);
+            mHeader.setTranslationY(0);
             mHeaderHeight = 0;
-            updateTranslateY(0);
+            mHeaderTranslateY = 0;
             removeView(mHeader);
             mHeader = null;
         }
