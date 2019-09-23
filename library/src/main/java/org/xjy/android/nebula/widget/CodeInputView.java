@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.Build;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
@@ -84,6 +85,10 @@ public class CodeInputView extends View {
         mTextPaint.setTextAlign(Paint.Align.CENTER);
         setFocusable(true);
         setFocusableInTouchMode(true);
+        setClickable(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            setDefaultFocusHighlightEnabled(false);
+        }
 
         mUnderlineAnimator = ValueAnimator.ofInt(0, mUnderlineWidth);
         mUnderlineAnimator.setDuration(150);
@@ -191,15 +196,16 @@ public class CodeInputView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-            requestFocus();
+        boolean superResult = super.onTouchEvent(event);
+        if (event.getActionMasked() == MotionEvent.ACTION_UP && isFocusable()) {
             InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) {
-                imm.showSoftInput(this, 0);
                 imm.viewClicked(this);
+                imm.showSoftInput(this, 0);
             }
+            return true;
         }
-        return super.onTouchEvent(event);
+        return superResult;
     }
 
     @Override
